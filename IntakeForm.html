@@ -1,0 +1,360 @@
+<div class="container" style="max-width: 800px; margin: 0 auto; padding: 40px 20px;">
+  <div class="form-card"
+    style="background: white;  padding: 40px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+    <div class="header" style="text-align: center; margin-bottom: 40px;">
+      <div class="logo"
+        style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-dark) 100%);  margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
+        <i class='bx bx-home'></i>
+      </div>
+      <h1 style="color: var(--text-primary); margin-bottom: 8px; font-size: 32px; font-weight: 700;">Buyer Intake Form
+      </h1>
+      <p class="subtitle" style="color: var(--text-secondary); margin-bottom: 0; font-size: 16px;">Enter new buyer
+        information to generate their personalized homeownership portal</p>
+    </div>
+
+    <form id="intakeForm" x-data="{
+      formData: $store.appStore.intakeForm,
+
+      init() {
+        // Sync form data with Alpine store
+        this.$watch('formData', () => {
+          $store.appStore.intakeForm = { ...this.formData };
+          $store.appStore.saveFormDataToStorage();
+        });
+      },
+
+      get dtiRatio() {
+        if (!this.formData.monthlyIncome) return 0;
+        const totalDebt = (parseFloat(this.formData.currentDebt) || 0) + (parseFloat(this.formData.estimatedMortgage) || 0);
+        return (totalDebt / parseFloat(this.formData.monthlyIncome)) * 100;
+      },
+
+      get debtRatio() {
+        if (!this.formData.monthlyIncome) return 0;
+        return ((parseFloat(this.formData.currentDebt) || 0) / parseFloat(this.formData.monthlyIncome)) * 100;
+      },
+
+      get mortgageRatio() {
+        if (!this.formData.monthlyIncome) return 0;
+        return ((parseFloat(this.formData.estimatedMortgage) || 0) / parseFloat(this.formData.monthlyIncome)) * 100;
+      },
+
+      get dtiColor() {
+        const dti = this.dtiRatio;
+        if (dti <= 36) return '#059669';
+        if (dti <= 43) return '#d97706';
+        return '#dc2626';
+      },
+
+      submitForm() {
+        if (!$store.appStore.validateIntakeForm()) {
+          return;
+        }
+
+        $store.appStore.serverLoading = true;
+
+        google.script.run
+          .withSuccessHandler((response) => {
+            $store.appStore.serverLoading = false;
+
+            if (response.success) {
+              $store.appStore.showSuccess(`Portal created for ${response.buyerName}!`);
+              $store.appStore.resetIntakeForm();
+
+              // Show success modal with portal link
+              $store.appStore.modalData = {
+                buyerName: response.buyerName,
+                portalUrl: response.portalUrl,
+                show: true
+              };
+            } else {
+              $store.appStore.showError(response.error || 'Failed to create portal');
+            }
+          })
+          .withFailureHandler((error) => {
+            $store.appStore.serverLoading = false;
+            $store.appStore.showError('System error: ' + error.message);
+          })
+          .handleIntake(this.formData);
+      }
+    }">
+
+      <!-- Financial Information Section -->
+      <div class="form-section"
+        style="background: #f8fafc;  padding: 25px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+        <div class="section-title"
+          style="font-size: 18px; font-weight: 600; color: var(--primary-teal); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+          <div class="section-icon"
+            style="width: 24px; height: 24px; background: var(--primary-teal);  display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+            <i class='bx bx-dollar'></i>
+          </div>
+          Financial Information
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label
+            style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 14px;">Buyer
+            Name <span style="color: var(--danger-color);">*</span></label>
+          <div class="input-group" style="position: relative;">
+            <span
+              style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px; z-index: 10;"><i
+                class='bx bx-user'></i></span>
+            <input type="text" x-model="formData.buyerName"
+              style="width: 100%; padding: 14px 16px; padding-left: 45px; border: 2px solid #e2e8f0;  font-size: 16px; box-sizing: border-box; background: white; font-family: inherit;"
+              placeholder="John Doe" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label
+            style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 14px;">Credit
+            Score <span style="color: var(--danger-color);">*</span></label>
+          <div class="input-group" style="position: relative;">
+            <span
+              style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px; z-index: 10;"><i
+                class='bx bx-bar-chart'></i></span>
+            <input type="number" x-model.number="formData.creditScore"
+              style="width: 100%; padding: 14px 16px; padding-left: 45px; border: 2px solid #e2e8f0;  font-size: 16px; box-sizing: border-box; background: white; font-family: inherit;"
+              min="300" max="850" placeholder="680" required>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-style: italic;">Range:
+            300-850 (Higher is better)</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label
+            style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 14px;">Monthly
+            Income (before taxes) <span style="color: var(--danger-color);">*</span></label>
+          <div class="input-group" style="position: relative;">
+            <span
+              style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px; z-index: 10;"><i
+                class='bx bx-money'></i></span>
+            <input type="number" x-model.number="formData.monthlyIncome"
+              style="width: 100%; padding: 14px 16px; padding-left: 45px; border: 2px solid #e2e8f0;  font-size: 16px; box-sizing: border-box; background: white; font-family: inherit;"
+              min="0" step="100" placeholder="5000" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label
+            style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 14px;">Current
+            Monthly Debt <span style="color: var(--danger-color);">*</span></label>
+          <div class="input-group" style="position: relative;">
+            <span
+              style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px; z-index: 10;"><i
+                class='bx bx-credit-card'></i></span>
+            <input type="number" x-model.number="formData.currentDebt"
+              style="width: 100%; padding: 14px 16px; padding-left: 45px; border: 2px solid #e2e8f0;  font-size: 16px; box-sizing: border-box; background: white; font-family: inherit;"
+              min="0" step="50" placeholder="800" required>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-style: italic;">Include car
+            payments, credit cards, student loans, etc.</div>
+        </div>
+      </div>
+
+      <!-- Home Information Section -->
+      <div class="form-section"
+        style="background: #f8fafc;  padding: 25px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+        <div class="section-title"
+          style="font-size: 18px; font-weight: 600; color: var(--primary-teal); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+          <div class="section-icon"
+            style="width: 24px; height: 24px; background: var(--primary-teal);  display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+            <i class='bx bx-building-house'></i>
+          </div>
+          Home Details
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label
+            style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 14px;">Target
+            Home Price <span style="color: var(--danger-color);">*</span></label>
+          <div class="input-group" style="position: relative;">
+            <span
+              style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px; z-index: 10;"><i
+                class='bx bx-home'></i></span>
+            <input type="number" x-model.number="formData.targetHomePrice"
+              style="width: 100%; padding: 14px 16px; padding-left: 45px; border: 2px solid #e2e8f0;  font-size: 16px; box-sizing: border-box; background: white; font-family: inherit;"
+              min="0" step="1000" placeholder="350000" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label
+            style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 14px;">
+            Estimated Monthly Mortgage (PITI) <span style="color: var(--danger-color);">*</span>
+            <a href="https://jeremyfay.realtor/mortgage-calculator" target="_blank" rel="noopener noreferrer"
+              style="margin-left: 10px; color: var(--primary-teal); text-decoration: none; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;">
+              <i class='bx bx-calculator' style="font-size: 16px;"></i>
+              Calculate PITI
+            </a>
+          </label>
+          <div class="input-group" style="position: relative;">
+            <span
+              style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px; z-index: 10;"><i
+                class='bx bx-building'></i></span>
+            <input type="number" x-model.number="formData.estimatedMortgage"
+              style="width: 100%; padding: 14px 16px; padding-left: 45px; border: 2px solid #e2e8f0;  font-size: 16px; box-sizing: border-box; background: white; font-family: inherit;"
+              min="0" step="50" placeholder="2200" required>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-style: italic;">Principal,
+            Interest, Taxes, Insurance</div>
+        </div>
+      </div>
+
+      <!-- Real-time DTI Calculation -->
+      <div class="stats-row"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+        <div class="stat-card"
+          style="background: white;  padding: 15px; text-align: center; border: 2px solid #e2e8f0;">
+          <div class="stat-value"
+            style="font-size: 24px; font-weight: 700; color: var(--primary-teal); margin-bottom: 4px;"
+            :style="{ color: dtiColor }" x-text="dtiRatio.toFixed(1) + '%'">0%</div>
+          <div class="stat-label"
+            style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+            Back-End DTI</div>
+          <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">(Used for Qualifying)</div>
+          <div class="progress-bar"
+            style="width: 100%; height: 8px; background: #e2e8f0;  overflow: hidden; margin-top: 8px;">
+            <div class="progress-fill" style="height: 100%;  transition: width 0.3s ease;"
+              :style="{ width: Math.min(dtiRatio, 100) + '%', background: 'linear-gradient(90deg, ' + dtiColor + ' 0%, ' + dtiColor + ' 100%)' }">
+            </div>
+          </div>
+        </div>
+        <div class="stat-card"
+          style="background: white;  padding: 15px; text-align: center; border: 2px solid #e2e8f0;">
+          <div class="stat-value"
+            style="font-size: 24px; font-weight: 700; color: var(--primary-teal); margin-bottom: 4px;"
+            x-text="debtRatio.toFixed(1) + '%'">0%</div>
+          <div class="stat-label"
+            style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+            Front-End DTI</div>
+          <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">(Current Debt Only)</div>
+        </div>
+        <div class="stat-card"
+          style="background: white;  padding: 15px; text-align: center; border: 2px solid #e2e8f0;">
+          <div class="stat-value"
+            style="font-size: 24px; font-weight: 700; color: var(--primary-teal); margin-bottom: 4px;"
+            x-text="mortgageRatio.toFixed(1) + '%'">0%</div>
+          <div class="stat-label"
+            style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+            Mortgage/Income</div>
+        </div>
+      </div>
+
+      <!-- Additional Information Section -->
+      <div class="form-section"
+        style="background: #f8fafc;  padding: 25px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+        <div class="section-title"
+          style="font-size: 18px; font-weight: 600; color: var(--primary-teal); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+          <div class="section-icon"
+            style="width: 24px; height: 24px; background: var(--primary-teal);  display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+            <i class='bx bx-edit'></i>
+          </div>
+          Additional Information
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label
+            style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); font-size: 14px;">Coach
+            Notes</label>
+          <div class="input-group" style="position: relative;">
+            <span
+              style="position: absolute; left: 16px; top: 16px; color: var(--text-secondary); font-size: 18px; z-index: 10;"><i
+                class='bx bx-note'></i></span>
+            <textarea x-model="formData.coachNotes"
+              style="width: 100%; padding: 14px 16px; padding-left: 45px; border: 2px solid #e2e8f0;  font-size: 16px; box-sizing: border-box; background: white; font-family: inherit; resize: vertical; min-height: 100px; padding-top: 16px;"
+              placeholder="Additional notes or coaching comments..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" @click="submitForm()" :disabled="$store.appStore.serverLoading"
+        style="background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-dark) 100%); color: white; border: none; padding: 16px 32px;  font-size: 18px; font-weight: 600; cursor: pointer; width: 100%; position: relative; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <span x-show="$store.appStore.serverLoading" class="loading-spinner"
+          style="display: inline-block; font-size: 20px; animation: fadeInOut 0.8s ease-in-out infinite; margin-right: 10px;"><i
+            class='bx bx-home'></i></span>
+        <span x-text="$store.appStore.serverLoading ? 'Processing...' : 'Submit & Generate Portal'">Submit & Generate
+          Portal</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Input validation script to prevent non-numeric entry -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Prevent non-numeric input (except numbers, decimals, and backspace)
+      const numericInputs = document.querySelectorAll('input[type="number"][x-model.number="formData.monthlyIncome"], input[type="number"][x-model.number="formData.currentDebt"], input[type="number"][x-model.number="formData.targetHomePrice"], input[type="number"][x-model.number="formData.estimatedMortgage"]');
+
+      numericInputs.forEach(function(input) {
+        input.addEventListener('keypress', function(e) {
+          const char = String.fromCharCode(e.which);
+          // Allow: numbers, decimal point, backspace, tab, escape, enter, delete
+          if (
+            !(char >= '0' && char <= '9') &&
+            char !== '.' &&
+            e.which !== 8 && // backspace
+            e.which !== 9 && // tab
+            e.which !== 13 && // enter
+            e.which !== 27 && // escape
+            e.which !== 46 // delete
+          ) {
+            e.preventDefault();
+          }
+
+          // Prevent multiple decimals
+          const currentValue = this.value;
+          if (char === '.' && currentValue.includes('.')) {
+            e.preventDefault();
+          }
+        });
+
+        // Handle paste events to strip non-numeric characters
+        input.addEventListener('paste', function(e) {
+          setTimeout(function() {
+            let value = input.value;
+            // Remove any non-numeric characters except decimal point
+            value = value.replace(/[^0-9.]/g, '');
+            // Remove extra decimals (keep only the first one)
+            const parts = value.split('.');
+            if (parts.length > 2) {
+              value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            input.value = value;
+            // Trigger Alpine update
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          }, 0);
+        });
+      });
+
+      // Credit score - integers only, no decimals
+      const creditScoreInput = document.querySelector('input[type="number"][x-model.number="formData.creditScore"]');
+      if (creditScoreInput) {
+        creditScoreInput.addEventListener('keypress', function(e) {
+          const char = String.fromCharCode(e.which);
+          // Allow: numbers, backspace, tab, escape, enter, delete
+          if (
+            !(char >= '0' && char <= '9') &&
+            e.which !== 8 && // backspace
+            e.which !== 9 && // tab
+            e.which !== 13 && // enter
+            e.which !== 27 && // escape
+            e.which !== 46 // delete
+          ) {
+            e.preventDefault();
+          }
+        });
+
+        creditScoreInput.addEventListener('paste', function(e) {
+          setTimeout(function() {
+            let value = creditScoreInput.value;
+            // Remove any non-numeric characters (integers only for credit score)
+            value = value.replace(/[^0-9]/g, '');
+            creditScoreInput.value = value;
+            // Trigger Alpine update
+            creditScoreInput.dispatchEvent(new Event('input', { bubbles: true }));
+          }, 0);
+        });
+      }
+    });
+  </script>
+</div>

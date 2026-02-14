@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Buyer Update Form</title>
+
+  <!-- Google Fonts - Lato -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- Toastr CSS & JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+  <!-- Select2 CSS & JS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #008c9a;
+      --primary-dark: #006b74;
+      --success-color: #059669;
+      --warning-color: #d97706;
+      --danger-color: #dc2626;
+      --background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      --card-bg: #ffffff;
+      --text-primary: #1a202c;
+      --text-secondary: #6b7280;
+      --border-color: #e5e7eb;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      min-height: 100vh;
+      font-family: 'Lato', sans-serif !important;
+      color: var(--text-primary);
+      line-height: 1.6;
+      background-image: radial-gradient(rgb(11, 124, 142) 11.6%, transparent 11.6%);
+      background-position: 4px 4px;
+      background-size: 8px 8px;
+      background-color: rgb(165 184 196);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .form-card {
+      background: var(--card-bg);
+      padding: 40px;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    h1 {
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 0;
+      font-size: 16px;
+    }
+
+    .form-section {
+      background: #f8fafc;
+      padding: 25px;
+      margin-bottom: 25px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+
+    .form-section:hover {
+      border-color: var(--primary-color);
+      box-shadow: var(--shadow-md);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .input-group {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 18px;
+      z-index: 10;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 14px 16px;
+      padding-left: 45px;
+      border: 2px solid #e2e8f0;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+      background: white;
+      font-family: inherit;
+    }
+
+    /* Select2 specific styling */
+    .select2-container .select2-selection--single {
+      height: 48px;
+      border: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      background: white;
+    }
+
+    .select2-container .select2-selection--single .select2-selection__rendered {
+      line-height: 48px;
+      padding-left: 45px;
+      padding-right: 40px;
+    }
+
+    .select2-container .select2-selection--single .select2-selection__arrow {
+      height: 46px;
+      right: 8px;
+    }
+
+    .select2-container--focus .select2-selection--single {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0, 140, 154, 0.1);
+    }
+
+    .select2-container--open .select2-dropdown {
+      border: 2px solid #e2e8f0;
+      box-shadow: var(--shadow-lg);
+      margin-top: 4px;
+    }
+
+    .select2-container .select2-results__option {
+      padding: 12px 16px;
+    }
+
+    .select2-container .select2-results__option--highlighted {
+      background: var(--primary-color);
+    }
+
+    .select2-container .select2-search--dropdown {
+      padding: 12px;
+    }
+
+    .select2-container .select2-search--dropdown .select2-search__field {
+      border: 2px solid #e2e8f0;
+      padding: 8px 12px;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0, 140, 154, 0.1);
+      transform: translateY(-2px);
+    }
+
+    input:hover,
+    textarea:hover {
+      border-color: #cbd5e0;
+    }
+
+    /* Invalid input state */
+    input.invalid {
+      border-color: var(--danger-color) !important;
+      animation: shake 0.3s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      padding-top: 16px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn .loading-spinner {
+      display: none;
+      font-size: 20px;
+      margin-right: 10px;
+      animation: fadeInOut 0.8s ease-in-out infinite;
+    }
+
+    .btn.loading .loading-spinner {
+      display: inline-block;
+    }
+
+    @keyframes fadeInOut {
+      0% {
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.3;
+      }
+    }
+
+    .required {
+      color: var(--danger-color);
+      font-weight: 600;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .validation-feedback {
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .validation-feedback.error {
+      color: var(--danger-color);
+      display: block;
+    }
+
+    .validation-feedback.success {
+      color: var(--success-color);
+      display: block;
+    }
+
+    .buyer-info {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      padding: 25px;
+      margin-bottom: 25px;
+      border: 2px solid #e2e8f0;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .buyer-info::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    }
+
+    .buyer-info h3 {
+      margin: 0 0 16px;
+      color: var(--text-primary);
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .info-value a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .info-value a:hover {
+      text-decoration: underline;
+    }
+
+    .loading-indicator {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+    }
+
+    .loading-spinner-large {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid var(--primary-color);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    .home-icon-loader {
+      font-size: 48px;
+      color: var(--primary-color, #0b7c8e);
+      animation: fadeInOut 1.5s ease-in-out infinite;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes fadeInOut {
+      0% {
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.3;
+      }
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 15px;
+      text-align: center;
+      border: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+      background: linear-gradient(90deg, var(--success-color) 0%, var(--primary-color) 100%);
+    }
+
+    .comparison-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .comparison-card {
+      background: #f8fafc;
+      padding: 20px;
+      border: 2px solid #e2e8f0;
+    }
+
+    .comparison-card h4 {
+      margin: 0 0 16px;
+      color: var(--primary-color);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .changed-field {
+      background: #fef3c7;
+      border-left: 3px solid var(--warning-color);
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+
+    .changed-label {
+      font-size: 12px;
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    .changed-values {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
+    .old-value {
+      color: var(--danger-color);
+      text-decoration: line-through;
+    }
+
+    .new-value {
+      color: var(--success-color);
+      font-weight: 600;
+    }
+
+    /* Custom Modal Styles */
+    .custom-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .custom-modal-overlay.active {
+      display: flex;
+    }
+
+    .custom-modal {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      animation: slideUp 0.3s ease;
+    }
+
+    .custom-modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .custom-modal-message {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 25px;
+    }
+
+    .custom-modal-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .custom-modal-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .custom-modal-btn.primary {
+      background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-dark) 100%);
+      color: white;
+    }
+
+    .custom-modal-btn.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(11, 124, 142, 0.3);
+    }
+
+    .custom-modal-btn.secondary {
+      background: #f5f5f5;
+      color: var(--text-secondary);
+    }
+
+    .custom-modal-btn.secondary:hover {
+      background: #e8e8e8;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px 15px;
+      }
+
+      .form-card {
+        padding: 30px 20px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .comparison-row {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Override Toastr styles */
+    .toast-top-center {
+      top: 20px;
+    }
+
+    .toastr {
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(10px);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="form-card">
+      <div class="header">
+        <div class="logo"><i class='bx bx-edit'></i></div>
+        <h1>Buyer Update Form</h1>
+        <p class="subtitle">Select and update existing buyer information</p>
+      </div>
+
+      <div class="loading-indicator" id="initialLoading">
+        <div id="actualLoading" style="text-align: center;">
+          <div class="home-icon-loader">
+            <i class='bx bx-home'></i>
+          </div>
+          <p>Loading client database...</p>
+        </div>
+      </div>
+
+      <form id="updateForm" style="display: none;">
+        <!-- Buyer Selection Section -->
+        <div class="form-section">
+          <div class="section-title">
+            <div class="section-icon"><i class='bx bx-group'></i></div>
+            Select Buyer to Update
+          </div>
+
+          <div class="form-group">
+            <label for="buyerSelect">Search and Select Buyer <span class="required">*</span></label>
+            <div class="input-group">
+              <span class="input-icon"><i class='bx bx-search'></i></span>
+              <select id="buyerSelect" name="buyerSelect" required style="width: 100%;"></select>
+            </div>
+            <div class="help-text">Start typing to search for a buyer by name or row number</div>
+            <div class="validation-feedback" id="buyerSelect-feedback"></div>
+          </div>
+        </div>
+
+        <div id="buyerDetails" style="display: none;">
+          <!-- Current Information Display -->
+          <div class="buyer-info" id="currentInfo">
+            <h3><i class='bx bx-clipboard'></i> Current Buyer Information</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Name</span>
+                <span class="info-value" id="currentName">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Credit Score</span>
+                <span class="info-value" id="currentCreditScore">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Monthly Income</span>
+                <span class="info-value" id="currentIncome">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Current Debt</span>
+                <span class="info-value" id="displayCurrentDebt">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Target Home Price</span>
+                <span class="info-value" id="currentHomePrice">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Readiness Score</span>
+                <span class="info-value" id="currentReadinessScore">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Summary</span>
+                <span class="info-value" id="currentSummary">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Portal Status</span>
+                <span class="info-value" id="currentPortal">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Update Information Section -->
+          <div class="form-section">
+            <div class="section-title">
+              <div class="section-icon"><i class='bx bx-edit'></i></div>
+              Update Information
+            </div>
+
+            <div class="form-group">
+              <label for="creditScore">Credit Score <span class="required">*</span></label>
+              <div class="input-group">
+                <span class="input-icon"><i class='bx bx-bar-chart'></i></span>
+                <input type="number" id="creditScore" name="creditScore" min="300" max="850" required>
+              </div>
+              <div class="validation-feedback" id="creditScore-feedback"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="monthlyIncome">Monthly Income (before taxes) <span class="required">*</span></label>
+              <div class="input-group">
+                <span class="input-icon"><i class='bx bx-money'></i></span>
+                <input type="number" id="monthlyIncome" name="monthlyIncome" min="0" step="100" required>
+              </div>
+              <div class="validation-feedback" id="monthlyIncome-feedback"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="currentDebt">Current Monthly Debt <span class="required">*</span></label>
+              <div class="input-group">
+                <span class="input-icon"><i class='bx bx-credit-card'></i></span>
+                <input type="number" id="currentDebt" name="currentDebt" min="0" step="50" required>
+              </div>
+              <div class="help-text">Include car payments, credit cards, student loans, etc.</div>
+              <div class="validation-feedback" id="currentDebt-feedback"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="targetHomePrice">Target Home Price <span class="required">*</span></label>
+              <div class="input-group">
+                <span class="input-icon"><i class='bx bx-home'></i></span>
+                <input type="number" id="targetHomePrice" name="targetHomePrice" min="0" step="1000" required>
+              </div>
+              <div class="validation-feedback" id="targetHomePrice-feedback"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="estimatedMortgage">
+                Estimated Monthly Mortgage (PITI) <span class="required">*</span>
+                <a href="https://jeremyfay.realtor/mortgage-calculator" target="_blank" rel="noopener noreferrer"
+                  style="margin-left: 10px; color: var(--primary-teal); text-decoration: none; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;">
+                  <i class='bx bx-calculator' style="font-size: 16px;"></i>
+                  Calculate PITI
+                </a>
+              </label>
+              <div class="input-group">
+                <span class="input-icon"><i class='bx bx-building'></i></span>
+                <input type="number" id="estimatedMortgage" name="estimatedMortgage" min="0" step="50" required>
+              </div>
+              <div class="help-text">Principal, Interest, Taxes, Insurance</div>
+              <div class="validation-feedback" id="estimatedMortgage-feedback"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="coachNotes">Coach Notes</label>
+              <div class="input-group">
+                <span class="input-icon"><i class='bx bx-note'></i></span>
+                <textarea id="coachNotes" name="coachNotes"
+                  placeholder="Additional notes or coaching comments..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-time DTI Calculation -->
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-value" id="dtiPercentage">0%</div>
+              <div class="stat-label">Back-End DTI</div>
+              <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">(Used for Qualifying)</div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="dtiProgress" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="debtRatio">0%</div>
+              <div class="stat-label">Front-End DTI</div>
+              <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">(Current Debt Only)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="mortgageRatio">0%</div>
+              <div class="stat-label">Mortgage/Income</div>
+            </div>
+          </div>
+
+          <!-- Changes Preview -->
+          <div class="comparison-row" id="changesPreview" style="display: none;">
+            <div class="comparison-card">
+              <h4><i class='bx bx-sync'></i> Pending Changes</h4>
+              <div id="changesList"></div>
+            </div>
+            <div class="comparison-card">
+              <h4><i class='bx bx-bar-chart'></i> Impact Assessment</h4>
+              <div id="impactList"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn" id="submitBtn">
+            <span class="loading-spinner"><i class='bx bx-home'></i></span>
+            <span class="btn-text">Update Buyer Information</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let buyers = [];
+    let originalData = {};
+
+    $(document).ready(function () {
+      // Configure Toastr
+      toastr.options = {
+        "closeButton": true,
+        "debug": false,
+        "newestOnTop": false,
+        "progressBar": true,
+        "positionClass": "toast-top-center",
+        "preventDuplicates": false,
+        "onclick": null,
+        "showDuration": "300",
+        "hideDuration": "1000",
+        "timeOut": "5000",
+        "extendedTimeOut": "1000",
+        "showEasing": "swing",
+        "hideEasing": "linear",
+        "showMethod": "fadeIn",
+        "hideMethod": "fadeOut"
+      };
+
+      // Initialize Select2
+      $('#buyerSelect').select2({
+        placeholder: 'Search for a buyer...',
+        allowClear: true,
+        width: '100%',
+        theme: 'default',
+        matcher: function (params, data) {
+          // Custom matcher for better search functionality
+          if ($.trim(params.term) === '') {
+            return data;
+          }
+
+          const term = params.term.toLowerCase();
+          const text = data.text.toLowerCase();
+          const rowMatch = data.element?.dataset?.rowNumber?.toLowerCase().includes(term);
+
+          if (text.indexOf(term) > -1 || rowMatch) {
+            return data;
+          }
+
+          return null;
+        }
+      });
+
+      // Listen for view changes to handle loading
+      window.addEventListener('viewChanged', function (e) {
+        if (e.detail.view === 'update') {
+          // Always load buyers when switching to update view
+          loadBuyers();
+        } else {
+          // Reset the UpdateForm to initial state when leaving update view
+          $('#updateForm').hide();
+          $('#initialLoading').show();
+          $('#actualLoading').hide();
+          $('#buyerSelect').val(null).trigger('change');
+          $('#buyerDetails').hide();
+        }
+      });
+    });
+
+    function loadBuyers() {
+      // Show loading state
+      $('#actualLoading').show();
+      $('#initialLoading').show();
+      $('#updateForm').hide();
+
+      console.log('Getting buyers from Alpine store...');
+
+      // Get buyers from the Alpine store (same data used in the buyer table)
+      tryGetBuyersFromAlpineStore();
+    }
+
+    function tryGetBuyersFromAlpineStore() {
+      // Try to get the buyers data from the Alpine store
+      let attempts = 0;
+      const maxAttempts = 20;
+
+      const checkAlpineStore = () => {
+        attempts++;
+        console.log(`Attempt ${attempts} to get buyers from Alpine store...`);
+
+        try {
+          // Check if Alpine is available
+          if (window.Alpine && window.Alpine.store) {
+            const appStore = Alpine.store('appStore');
+            if (appStore && appStore.buyers) {
+              buyers = appStore.buyers;
+              console.log('Successfully got buyers from Alpine store. Count:', buyers.length);
+              console.log('First buyer data:', buyers.length > 0 ? JSON.stringify(buyers[0], null, 2) : 'No buyers');
+              console.log('All buyers:', JSON.stringify(buyers, null, 2));
+
+              $('#initialLoading').hide();
+              $('#updateForm').fadeIn();
+              populateBuyerDropdown();
+              toastr.info(`Loaded ${buyers.length} buyers from dashboard`, 'Database Loaded');
+              $('#actualLoading').hide();
+              return;
+            }
+          }
+        } catch (e) {
+          console.log('Error accessing Alpine store:', e);
+        }
+
+        // If not found yet, try again
+        if (attempts < maxAttempts) {
+          setTimeout(checkAlpineStore, 100);
+        } else {
+          console.error('Could not get buyers from Alpine store after', maxAttempts, 'attempts');
+          // Fallback to server call if Alpine store is not available
+          loadBuyersFromServer();
+        }
+      };
+
+      // Start checking
+      checkAlpineStore();
+    }
+
+    function loadBuyersFromServer() {
+      console.log('Fallback: Loading buyers from server...');
+
+      google.script.run
+        .withSuccessHandler(function (response) {
+          $('#initialLoading').hide();
+          $('#updateForm').fadeIn();
+
+          if (response && response.buyers) {
+            buyers = response.buyers;
+            populateBuyerDropdown();
+            toastr.info(`Loaded ${buyers.length} buyers from database`, 'Database Loaded');
+          } else {
+            toastr.error('Failed to load buyers from server', 'Error');
+          }
+          $('#actualLoading').hide();
+        })
+        .withFailureHandler(function (error) {
+          $('#initialLoading').hide();
+          $('#actualLoading').hide();
+          toastr.error('Error loading buyers: ' + error.message, 'Error');
+        })
+        .getBuyers();
+    }
+
+    function populateBuyerDropdown() {
+      console.log('populateBuyerDropdown called, buyers:', buyers);
+      const $buyerSelect = $('#buyerSelect').empty();
+
+      // Add placeholder option
+      $buyerSelect.append('<option></option>');
+
+      if (!buyers || buyers.length === 0) {
+        console.log('No buyers to populate');
+        return;
+      }
+
+      buyers.forEach(function (buyer, index) {
+        console.log('Processing buyer:', index, buyer);
+        const portalStatus = buyer.portalUrl ? '✅ Portal Active' : '❌ No Portal';
+        const optionText = `${buyer.name || buyer.buyerName || 'Unnamed'} (Row ${buyer.rowIndex}) - ${portalStatus}`;
+
+        const $option = $('<option>')
+          .val(buyer.rowIndex)
+          .text(optionText)
+          .attr('data-row-number', buyer.rowIndex.toString());
+
+        $buyerSelect.append($option);
+        console.log('Added option:', optionText);
+      });
+
+      console.log('Finished populating dropdown');
+    }
+
+    // Handle buyer selection
+    $('#buyerSelect').on('change', function () {
+      const selectedRow = parseInt($(this).val());
+      const $buyerDetails = $('#buyerDetails');
+
+      console.log('Buyer selected - rowIndex:', selectedRow);
+      console.log('All buyers:', JSON.stringify(buyers, null, 2));
+
+      if (selectedRow && !isNaN(selectedRow)) {
+        const buyer = buyers.find(b => b.rowIndex === selectedRow);
+        console.log('Found buyer:', buyer ? JSON.stringify(buyer, null, 2) : 'NOT FOUND');
+        if (buyer) {
+          loadBuyerData(buyer);
+          $buyerDetails.slideDown(300);
+        } else {
+          console.error('Buyer with rowIndex', selectedRow, 'not found in buyers array');
+        }
+      } else {
+        $buyerDetails.slideUp(300);
+        clearFormData();
+      }
+    });
+
+    function loadBuyerData(buyer) {
+      // Debug: Log the buyer object
+      console.log('loadBuyerData called with:', JSON.stringify(buyer, null, 2));
+
+      // Update current information display
+      $('#currentName').text(buyer.name || 'N/A');
+      $('#currentCreditScore').text(buyer.creditScore || 'N/A');
+      $('#currentIncome').text(buyer.monthlyIncome ? '$' + parseInt(buyer.monthlyIncome).toLocaleString() : 'N/A');
+      $('#displayCurrentDebt').text(buyer.currentDebt ? '$' + parseInt(buyer.currentDebt).toLocaleString() : 'N/A');
+      $('#currentHomePrice').text(buyer.targetHomePrice ? '$' + parseInt(buyer.targetHomePrice).toLocaleString() : 'N/A');
+      $('#currentReadinessScore').text(buyer.readinessScore ? (Math.round(buyer.readinessScore * 100) + '%') : 'N/A');
+      $('#currentSummary').html(buyer.summary || '-');
+      $('#currentPortal').html(
+        buyer.portalUrl
+          ? '<div><a href="' + buyer.portalUrl + '" target="_blank">✅ View Portal</a></div>'
+          : '❌ Not generated (Use checkbox below to generate)'
+      );
+
+      // Store original data for comparison
+      originalData = {
+        rowIndex: buyer.rowIndex,
+        creditScore: buyer.creditScore || '',
+        monthlyIncome: buyer.monthlyIncome || '',
+        currentDebt: buyer.currentDebt || '',
+        targetHomePrice: buyer.targetHomePrice || '',
+        estimatedMortgage: buyer.estimatedMortgage || '',
+        coachNotes: buyer.coachNotes || ''
+      };
+
+      console.log('originalData to be set:', JSON.stringify(originalData, null, 2));
+
+      // Populate form with current values
+      $('#creditScore').val(originalData.creditScore);
+      $('#monthlyIncome').val(originalData.monthlyIncome);
+      $('#currentDebt').val(originalData.currentDebt);
+      $('#targetHomePrice').val(originalData.targetHomePrice);
+      $('#estimatedMortgage').val(originalData.estimatedMortgage);
+      $('#coachNotes').val(originalData.coachNotes);
+
+      // Verify values were set
+      console.log('Form values after setting:');
+      console.log('creditScore:', $('#creditScore').val());
+      console.log('monthlyIncome:', $('#monthlyIncome').val());
+      console.log('currentDebt:', $('#currentDebt').val());
+      console.log('targetHomePrice:', $('#targetHomePrice').val());
+      console.log('estimatedMortgage:', $('#estimatedMortgage').val());
+      console.log('coachNotes:', $('#coachNotes').val());
+
+      // Update DTI calculations
+      updateDTICalculations();
+    }
+
+    function clearFormData() {
+      $('#updateForm')[0].reset();
+      $('.validation-feedback').removeClass('error success').text('');
+      $('#changesPreview').hide();
+      updateDTICalculations();
+    }
+
+    // Real-time calculations and validation
+    function updateDTICalculations() {
+      const monthlyIncome = parseFloat($('#monthlyIncome').val()) || 0;
+      const currentDebt = parseFloat($('#currentDebt').val()) || 0;
+      const estimatedMortgage = parseFloat($('#estimatedMortgage').val()) || 0;
+
+      if (monthlyIncome > 0) {
+        const totalDebt = currentDebt + estimatedMortgage;
+        const dtiRatio = (totalDebt / monthlyIncome) * 100;
+        const debtRatio = (currentDebt / monthlyIncome) * 100;
+        const mortgageRatio = (estimatedMortgage / monthlyIncome) * 100;
+
+        $('#dtiPercentage').text(dtiRatio.toFixed(1) + '%');
+        $('#debtRatio').text(debtRatio.toFixed(1) + '%');
+        $('#mortgageRatio').text(mortgageRatio.toFixed(1) + '%');
+
+        // Update progress bar
+        $('#dtiProgress').css('width', Math.min(dtiRatio, 100) + '%');
+
+        // Color code based on DTI ratio
+        if (dtiRatio <= 36) {
+          $('#dtiProgress').css('background', 'linear-gradient(90deg, #059669 0%, #008c9a 100%)');
+        } else if (dtiRatio <= 43) {
+          $('#dtiProgress').css('background', 'linear-gradient(90deg, #d97706 0%, #f59e0b 100%)');
+        } else {
+          $('#dtiProgress').css('background', 'linear-gradient(90deg, #dc2626 0%, #ef4444 100%)');
+        }
+      }
+
+      // Check for changes and show preview
+      checkForChanges();
+    }
+
+    function checkForChanges() {
+      const currentData = {
+        creditScore: $('#creditScore').val(),
+        monthlyIncome: $('#monthlyIncome').val(),
+        currentDebt: $('#currentDebt').val(),
+        targetHomePrice: $('#targetHomePrice').val(),
+        estimatedMortgage: $('#estimatedMortgage').val(),
+        coachNotes: $('#coachNotes').val()
+      };
+
+      const changes = [];
+      const impacts = [];
+
+      // Helper function to normalize values for comparison
+      const normalizeValue = function(val) {
+        if (val === null || val === undefined) return '';
+        return String(val).trim();
+      };
+
+      // Compare each field
+      Object.keys(currentData).forEach(field => {
+        const currentVal = normalizeValue(currentData[field]);
+        const originalVal = normalizeValue(originalData[field]);
+
+        // Only include if values are actually different
+        if (currentVal !== originalVal) {
+          const fieldLabels = {
+            creditScore: 'Credit Score',
+            monthlyIncome: 'Monthly Income',
+            currentDebt: 'Current Monthly Debt',
+            targetHomePrice: 'Target Home Price',
+            estimatedMortgage: 'Estimated Mortgage',
+            coachNotes: 'Coach Notes'
+          };
+
+          changes.push({
+            field: fieldLabels[field],
+            old: originalVal || 'Not set',
+            new: currentVal || 'Not set'
+          });
+
+          // Calculate impacts
+          if (field === 'creditScore') {
+            const oldScore = parseInt(originalData.creditScore) || 0;
+            const newScore = parseInt(currentData.creditScore) || 0;
+            const diff = newScore - oldScore;
+
+            if (diff > 0) {
+              impacts.push(`Credit score improvement: +${diff} points`);
+            } else if (diff < 0) {
+              impacts.push(`Credit score decrease: ${diff} points`);
+            }
+          }
+
+          if (field === 'monthlyIncome') {
+            const oldIncome = parseFloat(originalData.monthlyIncome) || 0;
+            const newIncome = parseFloat(currentData.monthlyIncome) || 0;
+            if (newIncome > oldIncome) {
+              impacts.push('Income increase may improve loan eligibility');
+            }
+          }
+
+          if (field === 'currentDebt') {
+            const oldDebt = parseFloat(originalData.currentDebt) || 0;
+            const newDebt = parseFloat(currentData.currentDebt) || 0;
+            if (newDebt < oldDebt) {
+              impacts.push('Debt reduction improves DTI ratio');
+            }
+          }
+        }
+      });
+
+      // Display changes if any
+      if (changes.length > 0) {
+        const changesHtml = changes.map(change => `
+            <div class="changed-field">
+              <div class="changed-label">${change.field}</div>
+              <div class="changed-values">
+                <span class="old-value">${change.old}</span>
+                <span>→</span>
+                <span class="new-value">${change.new}</span>
+              </div>
+            </div>
+          `).join('');
+
+        $('#changesList').html(changesHtml);
+        $('#impactList').html(impacts.map(impact => `<div style="margin-bottom: 8px;">${impact}</div>`).join(''));
+        $('#changesPreview').slideDown(300);
+      } else {
+        $('#changesPreview').slideUp(300);
+      }
+    }
+
+    // Real-time validation
+    function validateField(field, value) {
+      const $input = $(field);
+      const $feedback = $(field + '-feedback');
+      let isValid = true;
+      let message = '';
+
+      // Check for empty value first (handles when browser strips non-numeric input)
+      if (value === '' || value === null || value === undefined) {
+        isValid = false;
+        message = 'This field is required';
+      } else {
+        switch (field) {
+          case '#creditScore':
+            const score = parseInt(value);
+            if (isNaN(score) || score < 300 || score > 850) {
+              isValid = false;
+              message = 'Credit score must be between 300-850';
+            } else if (score >= 720) {
+              message = 'Excellent credit score!';
+            } else if (score >= 680) {
+              message = 'Good credit score';
+            }
+            break;
+          case '#monthlyIncome':
+            const income = parseFloat(value);
+            if (isNaN(income) || income <= 0) {
+              isValid = false;
+              message = 'Please enter a valid monthly income';
+            }
+            break;
+          case '#currentDebt':
+            const debt = parseFloat(value);
+            if (isNaN(debt) || debt < 0) {
+              isValid = false;
+              message = 'Please enter a valid debt amount';
+            }
+            break;
+          case '#targetHomePrice':
+            const price = parseFloat(value);
+            if (isNaN(price) || price <= 0) {
+              isValid = false;
+              message = 'Please enter a valid home price';
+            }
+            break;
+          case '#estimatedMortgage':
+            const mortgage = parseFloat(value);
+            if (isNaN(mortgage) || mortgage <= 0) {
+              isValid = false;
+              message = 'Please enter a valid mortgage amount';
+            }
+            break;
+        }
+      }
+
+      // Update visual feedback
+      $input.removeClass('invalid');
+      $feedback.removeClass('error success');
+      if (message) {
+        if (!isValid) {
+          $input.addClass('invalid');
+        }
+        $feedback.addClass(isValid ? 'success' : 'error').text(message);
+      } else {
+        $feedback.text('');
+      }
+
+      return isValid;
+    }
+
+    // Attach event listeners for DTI calculations
+    $('#monthlyIncome, #currentDebt, #estimatedMortgage').on('input', updateDTICalculations);
+
+    // Attach event listeners for change detection
+    $('#creditScore, #monthlyIncome, #currentDebt, #targetHomePrice, #estimatedMortgage, #coachNotes').on('input change', function () {
+      checkForChanges();
+    });
+
+    // Real-time validation
+    $('#creditScore, #monthlyIncome, #currentDebt, #targetHomePrice, #estimatedMortgage').on('blur input', function () {
+      validateField('#' + $(this).attr('id'), $(this).val());
+    });
+
+    // Prevent non-numeric input (except numbers, decimals, and backspace)
+    $('#monthlyIncome, #currentDebt, #targetHomePrice, #estimatedMortgage').on('keypress', function(e) {
+      const char = String.fromCharCode(e.which);
+      // Allow: numbers, decimal point, backspace, tab, escape, enter
+      if (
+        !(char >= '0' && char <= '9') &&
+        char !== '.' &&
+        e.which !== 8 && // backspace
+        e.which !== 9 && // tab
+        e.which !== 13 && // enter
+        e.which !== 27 && // escape
+        e.which !== 46 // delete
+      ) {
+        e.preventDefault();
+      }
+
+      // Prevent multiple decimals
+      const currentValue = $(this).val();
+      if (char === '.' && currentValue.includes('.')) {
+        e.preventDefault();
+      }
+    });
+
+    // Credit score - integers only, no decimals
+    $('#creditScore').on('keypress', function(e) {
+      const char = String.fromCharCode(e.which);
+      // Allow: numbers, backspace, tab, escape, enter, delete
+      if (
+        !(char >= '0' && char <= '9') &&
+        e.which !== 8 && // backspace
+        e.which !== 9 && // tab
+        e.which !== 13 && // enter
+        e.which !== 27 && // escape
+        e.which !== 46 // delete
+      ) {
+        e.preventDefault();
+      }
+    });
+
+    // Also handle paste events to strip non-numeric characters
+    $('#monthlyIncome, #currentDebt, #targetHomePrice, #estimatedMortgage').on('paste', function(e) {
+      const $input = $(this);
+      setTimeout(function() {
+        let value = $input.val();
+        // Remove any non-numeric characters except decimal point
+        value = value.replace(/[^0-9.]/g, '');
+        // Remove extra decimals (keep only the first one)
+        const parts = value.split('.');
+        if (parts.length > 2) {
+          value = parts[0] + '.' + parts.slice(1).join('');
+        }
+        $input.val(value);
+        validateField('#' + $input.attr('id'), value);
+      }, 0);
+    });
+
+    $('#creditScore').on('paste', function(e) {
+      const $input = $(this);
+      setTimeout(function() {
+        let value = $input.val();
+        // Remove any non-numeric characters (integers only for credit score)
+        value = value.replace(/[^0-9]/g, '');
+        $input.val(value);
+        validateField('#' + $input.attr('id'), value);
+      }, 0);
+    });
+
+    // Form submission
+    $('#updateForm').on('submit', function (e) {
+      e.preventDefault();
+
+      const selectedRow = parseInt($('#buyerSelect').val());
+
+      if (!selectedRow || isNaN(selectedRow)) {
+        toastr.error('Please select a buyer to update', 'Selection Required');
+        return;
+      }
+
+      // Validate all fields
+      let isFormValid = true;
+      const requiredFields = ['#creditScore', '#monthlyIncome', '#currentDebt', '#targetHomePrice', '#estimatedMortgage'];
+
+      requiredFields.forEach(field => {
+        if (!validateField(field, $(field).val())) {
+          isFormValid = false;
+        }
+      });
+
+      if (!isFormValid) {
+        toastr.error('Please correct the errors before submitting', 'Validation Error');
+        return;
+      }
+
+      const $submitBtn = $('#submitBtn');
+      const originalText = $('.btn-text').text();
+
+      // Show loading state
+      $submitBtn.addClass('loading').prop('disabled', true);
+      $('.btn-text').text('Updating buyer information...');
+
+      // Get form data
+      const formData = {
+        rowIndex: selectedRow,
+        creditScore: parseInt($('#creditScore').val()),
+        monthlyIncome: parseFloat($('#monthlyIncome').val()),
+        currentDebt: parseFloat($('#currentDebt').val()),
+        targetHomePrice: parseFloat($('#targetHomePrice').val()),
+        estimatedMortgage: parseFloat($('#estimatedMortgage').val()),
+        coachNotes: $('#coachNotes').val().trim()
+      };
+
+      // Calculate DTI (Debt-to-Income) ratio
+      const totalMonthlyDebt = formData.currentDebt + formData.estimatedMortgage;
+      const dtiRatio = (totalMonthlyDebt / formData.monthlyIncome) * 100;
+      formData.dtiRatio = dtiRatio.toFixed(2);
+
+      // Call server-side function
+      google.script.run
+        .withSuccessHandler(function (response) {
+          $submitBtn.removeClass('loading').prop('disabled', false);
+          $('.btn-text').text(originalText);
+
+          if (response.success) {
+            toastr.success('Buyer information updated successfully!', 'Update Complete');
+
+            setTimeout(async () => {
+              const shouldView = await showConfirmModal(
+                'Update Complete!',
+                'Would you like to view the updated portal now?'
+              );
+              if (shouldView) {
+                window.open(response.portalUrl, '_blank');
+              }
+            }, 1000);
+
+            // Reload buyers to get updated data
+            loadBuyers();
+          } else {
+            toastr.error(response.error, 'Update Error');
+          }
+        })
+        .withFailureHandler(function (error) {
+          $submitBtn.removeClass('loading').prop('disabled', false);
+          $('.btn-text').text(originalText);
+          toastr.error('System error: ' + error.message, 'Technical Error');
+        })
+        .handleUpdate(formData);
+    });
+
+    // Custom Modal Function
+    function showConfirmModal(title, message) {
+      return new Promise(function(resolve) {
+        // Remove existing modal if any
+        $('.custom-modal-overlay').remove();
+
+        // Create modal HTML
+        const modalHtml = `
+          <div class="custom-modal-overlay" id="confirmModal">
+            <div class="custom-modal">
+              <div class="custom-modal-title">${title}</div>
+              <div class="custom-modal-message">${message}</div>
+              <div class="custom-modal-buttons">
+                <button class="custom-modal-btn secondary" id="modalCancel">Cancel</button>
+                <button class="custom-modal-btn primary" id="modalConfirm">Confirm</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Add to body
+        $('body').append(modalHtml);
+
+        // Show modal
+        setTimeout(function() {
+          $('#confirmModal').addClass('active');
+        }, 10);
+
+        // Handle button clicks
+        $('#modalConfirm').on('click', function() {
+          $('#confirmModal').removeClass('active');
+          setTimeout(function() {
+            $('#confirmModal').remove();
+            resolve(true);
+          }, 200);
+        });
+
+        $('#modalCancel').on('click', function() {
+          $('#confirmModal').removeClass('active');
+          setTimeout(function() {
+            $('#confirmModal').remove();
+            resolve(false);
+          }, 200);
+        });
+
+        // Close on overlay click
+        $('#confirmModal').on('click', function(e) {
+          if (e.target === this) {
+            $('#confirmModal').removeClass('active');
+            setTimeout(function() {
+              $('#confirmModal').remove();
+              resolve(false);
+            }, 200);
+          }
+        });
+      });
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,673 @@
+<script>
+  document.addEventListener("alpine:init", () => {
+    Alpine.store("appStore", {
+      // Form states
+      currentView: 'portal', // portal, intake, update
+      loading: false,
+      serverLoading: false,
+
+      // Authentication
+      isAuthenticated: false,
+      currentUser: null,
+
+      // Portal data
+      clientData: {},
+      headers: [],
+
+      // Form states
+      intakeForm: {
+        buyerName: '',
+        creditScore: '',
+        monthlyIncome: '',
+        currentDebt: '',
+        targetHomePrice: '',
+        estimatedMortgage: '',
+        coachNotes: ''
+      },
+
+      updateForm: {
+        selectedIndex: '',
+        buyerName: '',
+        creditScore: '',
+        monthlyIncome: '',
+        currentDebt: '',
+        targetHomePrice: '',
+        estimatedMortgage: '',
+        coachNotes: ''
+      },
+
+      // UI States
+      showIntakeSuccess: false,
+      showUpdateSuccess: false,
+      showErrors: false,
+      errorMessage: '',
+      successMessage: '',
+
+      // Modal states
+      showModal: false,
+      modalContent: '',
+
+      // Navigation
+      mobileMenuOpen: false,
+
+      // Portal token for accessing client portals
+      portalToken: '',
+
+      // Buyers data for datatable
+      buyers: [],
+      buyersLoading: false,
+      buyersError: '',
+      searchQuery: '',
+
+  
+      // Authentication
+      isAuthenticated: false,
+      authModalOpen: false,
+      pinInput: '',
+      authError: '',
+      rememberAuth: true, // Store auth in localStorage
+
+      // Success modal data
+      modalData: {
+        show: false,
+        buyerName: '',
+        portalUrl: ''
+      },
+
+      // Initialize store
+      init() {
+        // Clear any saved view state to prevent unwanted switching
+        localStorage.removeItem('currentView');
+
+        // Set initialization flag
+        this._isInitializing = true;
+
+        // Check authentication status first
+        this.checkAuthStatus();
+
+        // Load buyers data if authenticated
+        if (this.isAuthenticated) {
+          this.loadBuyersData();
+        }
+
+        // Check if we're in authenticated context
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('t');
+        const form = urlParams.get('form');
+
+        if (token) {
+          this.currentView = 'portal';
+          this.loadClientData(token);
+        } else if (form) {
+          this.currentView = form;
+        } else {
+          // Always default to portal view (Welcome) unless specified otherwise
+          this.currentView = 'portal';
+        }
+
+        // Don't load saved form data automatically to prevent unwanted switching
+        // this.loadFormDataFromStorage();
+
+        // Clear initialization flag after a delay
+        setTimeout(() => {
+          this._isInitializing = false;
+        }, 200);
+      },
+
+      // Load client data for portal view
+      loadClientData(token, isInline = false) {
+        this.serverLoading = true;
+
+        if (isInline) {
+          // For inline view, we need to fetch the client data
+          google.script.run
+            .withSuccessHandler(response => {
+              this.serverLoading = false;
+            })
+            .withFailureHandler(error => {
+              console.error('Error loading client data:', error);
+              this.serverLoading = false;
+            })
+            .getClientDataForToken(token);
+        } else {
+          // Data is already loaded server-side for regular portal view
+          this.serverLoading = false;
+        }
+      },
+
+      // Form management
+      resetIntakeForm() {
+        this.intakeForm = {
+          buyerName: '',
+          creditScore: '',
+          monthlyIncome: '',
+          currentDebt: '',
+          targetHomePrice: '',
+          estimatedMortgage: '',
+          coachNotes: ''
+        };
+        this.saveFormDataToStorage();
+      },
+
+      resetUpdateForm() {
+        this.updateForm = {
+          selectedIndex: '',
+          buyerName: '',
+          creditScore: '',
+          monthlyIncome: '',
+          currentDebt: '',
+          targetHomePrice: '',
+          estimatedMortgage: '',
+          coachNotes: ''
+        };
+        this.saveFormDataToStorage();
+      },
+
+      // Local storage management
+      saveFormDataToStorage() {
+        try {
+          localStorage.setItem('intakeFormData', JSON.stringify(this.intakeForm));
+          localStorage.setItem('updateFormData', JSON.stringify(this.updateForm));
+        } catch (e) {
+          console.warn('Could not save form data to localStorage:', e);
+        }
+      },
+
+      loadFormDataFromStorage() {
+        try {
+          const savedIntake = localStorage.getItem('intakeFormData');
+          const savedUpdate = localStorage.getItem('updateFormData');
+
+          if (savedIntake) {
+            this.intakeForm = { ...this.intakeForm, ...JSON.parse(savedIntake) };
+          }
+          if (savedUpdate) {
+            this.updateForm = { ...this.updateForm, ...JSON.parse(savedUpdate) };
+          }
+        } catch (e) {
+          console.warn('Could not load form data from localStorage:', e);
+        }
+      },
+
+      // View management
+      changeView(view) {
+        // Prevent rapid switching
+        if (this.currentView === view) return;
+
+        this.currentView = view;
+        this.mobileMenuOpen = false;
+
+        // Update URL without page reload
+        const url = new URL(window.location);
+        if (view === 'portal') {
+          url.searchParams.delete('form');
+        } else {
+          url.searchParams.set('form', view);
+        }
+        window.history.pushState({}, '', url);
+
+        // Only trigger event if not initializing
+        if (!this._isInitializing) {
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('viewChanged', { detail: { view: view } }));
+          }, 100);
+        }
+      },
+
+      // Navigation management
+      toggleMobileMenu() {
+        this.mobileMenuOpen = !this.mobileMenuOpen;
+      },
+
+      closeMobileMenu() {
+        this.mobileMenuOpen = false;
+      },
+
+      // Load all buyers data
+      loadBuyersData() {
+        this.buyersLoading = true;
+        this.buyersError = '';
+
+        google.script.run
+          .withSuccessHandler(response => {
+            if (response.success) {
+              this.buyers = response.buyers;
+            } else {
+              this.buyersError = response.error || 'Failed to load buyers data';
+            }
+            this.buyersLoading = false;
+          })
+          .withFailureHandler(error => {
+            this.buyersError = error.message || 'Error loading buyers data';
+            this.buyersLoading = false;
+          })
+          .getAllBuyersData();
+      },
+
+      // Portal access helper
+      accessPortalWithToken() {
+        const input = this.portalToken.trim();
+        if (!input) return;
+
+        // Check if it's a full URL
+        if (input.includes('://')) {
+          // Extract token from URL
+          const url = new URL(input);
+          const token = url.searchParams.get('t');
+          if (token) {
+            window.location.href = window.location.origin + window.location.pathname + '?t=' + encodeURIComponent(token);
+          } else {
+            toastr.error('Invalid portal URL - no token found', 'Invalid URL');
+          }
+        } else {
+          // Assume it's a token
+          window.location.href = window.location.origin + window.location.pathname + '?t=' + encodeURIComponent(input);
+        }
+      },
+
+      // Open portal for a specific buyer (inline view)
+      get filteredBuyers() {
+        if (!this.searchQuery) {
+          return this.buyers;
+        }
+
+        const query = this.searchQuery.toLowerCase();
+        return this.buyers.filter(buyer =>
+          buyer.buyerName.toLowerCase().includes(query) ||
+          buyer.token.toLowerCase().includes(query) ||
+          buyer.email.toLowerCase().includes(query) ||
+          buyer.phone.toLowerCase().includes(query)
+        );
+      },
+
+      // Modal management
+      openModal(content) {
+        this.modalContent = content;
+        this.showModal = true;
+        document.body.style.overflow = 'hidden';
+      },
+
+      closeModal() {
+        this.showModal = false;
+        this.modalContent = '';
+        document.body.style.overflow = '';
+      },
+
+      // Success/error handling
+      showSuccess(message) {
+        this.successMessage = message;
+        this.showErrors = false;
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 5000);
+      },
+
+      showError(message) {
+        this.errorMessage = message;
+        this.showErrors = true;
+        setTimeout(() => {
+          this.showErrors = false;
+          this.errorMessage = '';
+        }, 5000);
+      },
+
+      // Form validation helpers
+      validateIntakeForm() {
+        const form = this.intakeForm;
+
+        // Validate buyer name
+        if (!form.buyerName || !form.buyerName.trim()) {
+          this.showError('Buyer name is required');
+          return false;
+        }
+
+        // Validate credit score - check for empty, null, undefined, or non-numeric
+        if (form.creditScore === '' || form.creditScore === null || form.creditScore === undefined) {
+          this.showError('Credit score is required');
+          return false;
+        }
+        const creditScore = parseFloat(form.creditScore);
+        if (isNaN(creditScore)) {
+          this.showError('Credit score must be a valid number');
+          return false;
+        }
+        if (creditScore < 300 || creditScore > 850) {
+          this.showError('Credit score must be between 300-850');
+          return false;
+        }
+
+        // Validate monthly income - check for empty, null, undefined, or non-numeric
+        if (form.monthlyIncome === '' || form.monthlyIncome === null || form.monthlyIncome === undefined) {
+          this.showError('Monthly income is required');
+          return false;
+        }
+        const monthlyIncome = parseFloat(form.monthlyIncome);
+        if (isNaN(monthlyIncome)) {
+          this.showError('Monthly income must be a valid number');
+          return false;
+        }
+        if (monthlyIncome <= 0) {
+          this.showError('Monthly income must be greater than 0');
+          return false;
+        }
+
+        // Validate current debt
+        if (form.currentDebt === '' || form.currentDebt === null || form.currentDebt === undefined) {
+          this.showError('Current monthly debt is required');
+          return false;
+        }
+        const currentDebt = parseFloat(form.currentDebt);
+        if (isNaN(currentDebt)) {
+          this.showError('Current debt must be a valid number');
+          return false;
+        }
+        if (currentDebt < 0) {
+          this.showError('Current debt cannot be negative');
+          return false;
+        }
+
+        // Validate target home price
+        if (form.targetHomePrice === '' || form.targetHomePrice === null || form.targetHomePrice === undefined) {
+          this.showError('Target home price is required');
+          return false;
+        }
+        const targetHomePrice = parseFloat(form.targetHomePrice);
+        if (isNaN(targetHomePrice)) {
+          this.showError('Target home price must be a valid number');
+          return false;
+        }
+        if (targetHomePrice <= 0) {
+          this.showError('Target home price must be greater than 0');
+          return false;
+        }
+
+        // Validate estimated mortgage
+        if (form.estimatedMortgage === '' || form.estimatedMortgage === null || form.estimatedMortgage === undefined) {
+          this.showError('Estimated monthly mortgage is required');
+          return false;
+        }
+        const estimatedMortgage = parseFloat(form.estimatedMortgage);
+        if (isNaN(estimatedMortgage)) {
+          this.showError('Estimated mortgage must be a valid number');
+          return false;
+        }
+        if (estimatedMortgage < 0) {
+          this.showError('Estimated mortgage cannot be negative');
+          return false;
+        }
+
+        return true;
+      },
+
+      validateUpdateForm() {
+        if (!this.updateForm.selectedIndex) {
+          this.showError('Please select a buyer to update');
+          return false;
+        }
+
+        const form = this.updateForm;
+
+        // Validate credit score - check for empty, null, undefined, or non-numeric
+        if (form.creditScore === '' || form.creditScore === null || form.creditScore === undefined) {
+          this.showError('Credit score is required');
+          return false;
+        }
+        const creditScore = parseFloat(form.creditScore);
+        if (isNaN(creditScore)) {
+          this.showError('Credit score must be a valid number');
+          return false;
+        }
+        if (creditScore < 300 || creditScore > 850) {
+          this.showError('Credit score must be between 300-850');
+          return false;
+        }
+
+        // Validate monthly income - check for empty, null, undefined, or non-numeric
+        if (form.monthlyIncome === '' || form.monthlyIncome === null || form.monthlyIncome === undefined) {
+          this.showError('Monthly income is required');
+          return false;
+        }
+        const monthlyIncome = parseFloat(form.monthlyIncome);
+        if (isNaN(monthlyIncome)) {
+          this.showError('Monthly income must be a valid number');
+          return false;
+        }
+        if (monthlyIncome <= 0) {
+          this.showError('Monthly income must be greater than 0');
+          return false;
+        }
+
+        // Validate current debt
+        if (form.currentDebt === '' || form.currentDebt === null || form.currentDebt === undefined) {
+          this.showError('Current monthly debt is required');
+          return false;
+        }
+        const currentDebt = parseFloat(form.currentDebt);
+        if (isNaN(currentDebt)) {
+          this.showError('Current debt must be a valid number');
+          return false;
+        }
+        if (currentDebt < 0) {
+          this.showError('Current debt cannot be negative');
+          return false;
+        }
+
+        // Validate target home price
+        if (form.targetHomePrice === '' || form.targetHomePrice === null || form.targetHomePrice === undefined) {
+          this.showError('Target home price is required');
+          return false;
+        }
+        const targetHomePrice = parseFloat(form.targetHomePrice);
+        if (isNaN(targetHomePrice)) {
+          this.showError('Target home price must be a valid number');
+          return false;
+        }
+        if (targetHomePrice <= 0) {
+          this.showError('Target home price must be greater than 0');
+          return false;
+        }
+
+        // Validate estimated mortgage
+        if (form.estimatedMortgage === '' || form.estimatedMortgage === null || form.estimatedMortgage === undefined) {
+          this.showError('Estimated monthly mortgage is required');
+          return false;
+        }
+        const estimatedMortgage = parseFloat(form.estimatedMortgage);
+        if (isNaN(estimatedMortgage)) {
+          this.showError('Estimated mortgage must be a valid number');
+          return false;
+        }
+        if (estimatedMortgage < 0) {
+          this.showError('Estimated mortgage cannot be negative');
+          return false;
+        }
+
+        return true;
+      },
+
+      // Utility functions
+      formatCurrency(amount) {
+        if (!amount) return '$0';
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        }).format(amount);
+      },
+
+      formatPercent(value) {
+        if (!value) return '0%';
+        return Math.round(value * 100) + '%';
+      },
+
+      formatDate(dateString) {
+        if (!dateString) return '';
+        return new Date(dateString).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      },
+
+      // Authentication methods
+      checkAuthStatus() {
+        try {
+          const authData = localStorage.getItem('adminAuth');
+          if (!authData) {
+            // Check if password protection is enabled
+            this.checkPasswordProtection();
+            return;
+          }
+
+          const parsed = JSON.parse(authData);
+          const now = new Date().getTime();
+          const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+
+          if (now - parsed.timestamp > oneHour) {
+            // Auth expired, remove it
+            localStorage.removeItem('adminAuth');
+            this.checkPasswordProtection();
+          } else {
+            // Auth is still valid
+            this.isAuthenticated = true;
+            this.loadBuyersData();
+          }
+        } catch (e) {
+          localStorage.removeItem('adminAuth');
+          this.checkPasswordProtection();
+        }
+      },
+
+      async checkPasswordProtection() {
+        try {
+          const response = await google.script.run
+            .withSuccessHandler((enabled) => {
+              if (enabled) {
+                this.isAuthenticated = false;
+              } else {
+                this.isAuthenticated = true;
+                this.loadBuyersData();
+              }
+            })
+            .withFailureHandler(() => {
+              this.isAuthenticated = false;
+            })
+            .isPasswordProtectionEnabled();
+        } catch (e) {
+          this.isAuthenticated = false;
+        }
+      },
+
+      async verifyPin() {
+        if (!this.pinInput.trim()) {
+          this.authError = 'Please enter a PIN';
+          return;
+        }
+
+        this.serverLoading = true;
+        this.authError = '';
+
+        try {
+          const response = await google.script.run
+            .withSuccessHandler((result) => {
+              this.serverLoading = false;
+
+              if (result.success) {
+                this.isAuthenticated = true;
+                this.authModalOpen = false;
+                this.pinInput = '';
+
+                // Store in localStorage if remember is checked
+                if (this.rememberAuth) {
+                  localStorage.setItem('adminAuth', JSON.stringify({
+                    timestamp: new Date().getTime()
+                  }));
+                }
+
+                // Load buyers data after successful authentication
+                this.loadBuyersData();
+
+                // Execute any pending callback after authentication
+                this.executePendingCallback();
+              } else {
+                this.authError = result.error || 'Authentication failed';
+              }
+            })
+            .withFailureHandler((error) => {
+              this.serverLoading = false;
+              this.authError = 'System error: ' + error.message;
+            })
+            .verifyAdminPin(this.pinInput.trim());
+        } catch (e) {
+          this.serverLoading = false;
+          this.authError = 'System error occurred';
+        }
+      },
+
+      requireAuth(callback) {
+        if (this.isAuthenticated) {
+          callback();
+        } else {
+          this.authModalOpen = true;
+          // Store the callback to execute after successful auth
+          this._pendingCallback = callback;
+        }
+      },
+
+      executePendingCallback() {
+        if (this._pendingCallback) {
+          const callback = this._pendingCallback;
+          this._pendingCallback = null;
+          callback();
+        }
+      }
+    });
+
+    // Form component store
+    Alpine.store("formStore", {
+      // Shared form logic
+      calculateDTI(monthlyIncome, currentDebt, estimatedMortgage) {
+        if (!monthlyIncome) return 0;
+        const totalDebt = (currentDebt || 0) + (estimatedMortgage || 0);
+        return totalDebt / monthlyIncome;
+      },
+
+      calculateMaxAffordable(monthlyIncome) {
+        return monthlyIncome * 0.4; // 40% rule
+      },
+
+      calculateReadinessScore(creditScore, dtiRatio) {
+        let score = 0;
+
+        // Credit score component (50% of score)
+        if (creditScore >= 720) score += 50;
+        else if (creditScore >= 680) score += 40;
+        else if (creditScore >= 640) score += 30;
+        else if (creditScore >= 600) score += 20;
+        else score += 10;
+
+        // DTI component (50% of score)
+        if (dtiRatio <= 0.28) score += 50;
+        else if (dtiRatio <= 0.36) score += 40;
+        else if (dtiRatio <= 0.43) score += 30;
+        else if (dtiRatio <= 0.50) score += 20;
+        else score += 10;
+
+        return score / 100; // Convert to 0-1 scale
+      },
+
+      getReadinessLabel(score) {
+        if (score >= 0.8) return 'Excellent';
+        if (score >= 0.6) return 'Good';
+        if (score >= 0.4) return 'Fair';
+        return 'Needs Work';
+      },
+
+      getReadinessColor(score) {
+        if (score >= 0.8) return '#2E7D32';
+        if (score >= 0.6) return '#C9A227';
+        if (score >= 0.4) return '#F57C00';
+        return '#C62828';
+      }
+    });
+  });
+</script>
